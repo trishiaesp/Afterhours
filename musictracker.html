@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#08090d">
+  <title>Afterhours — Music Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="musictracker.css">
+</head>
+<body>
+  <div class="ornament" aria-hidden="true"></div><div class="glass-star" aria-hidden="true"></div>
+  <div class="shell">
+    <header class="topbar"><a class="wordmark" href="#home"><span class="brand-mark">✳</span> afterhours<span class="wordmark-dot">.</span></a>
+      <nav aria-label="Main navigation"><a href="#favorites">Favorites</a><a href="#albums">Albums</a><a href="#artists">Artists</a><a href="#moods">Moods</a></nav><span class="profile" aria-label="Music archive">✳</span>
+    </header>
+    <main id="home">
+        <section class="intro"><h1>Music that<br><em>means something.</em></h1><p class="intro-copy" id="random-quote">“Keep the songs that make a moment stay.”</p>
+      </section>
+      <section class="overview" aria-label="Music archive summary"><div><span>FAVORITE SONGS</span><strong id="favorite-count">0</strong></div><div><span>ALBUMS LISTENED</span><strong id="album-count">0</strong></div><div><span>ARTISTS SAVED</span><strong id="artist-count">0</strong></div><div><span>YOUR MOODS</span><strong>04</strong></div></section>
+
+      <section class="feature-section" id="favorites"><div class="section-head"><div><h2>Favorite songs</h2></div><button class="add-button" id="add-song">＋ Add song</button></div>
+        <div class="song-list" id="song-list"></div><p class="empty-state" id="songs-empty">Your song archive is waiting. Add a favorite to start it.</p>
+      </section>
+
+      <section class="feature-section albums-section" id="albums"><div class="section-head"><div><h2>Albums you’ve listened to</h2></div><button class="add-button" id="add-album">＋ Add album</button></div>
+        <div class="album-grid" id="album-grid"></div><p class="empty-state" id="albums-empty">No albums saved yet. Add an album to begin your collection.</p>
+      </section>
+
+      <section class="feature-section artists-section" id="artists"><div class="section-head"><div><h2>Artists in your archive</h2></div><button class="add-button" id="add-artist">＋ Add artist</button></div>
+        <div class="artist-grid" id="artist-grid"></div><p class="empty-state" id="artists-empty">No artists saved yet. Add one, or add a song or album to discover an artist.</p>
+      </section>
+
+      <section class="feature-section moods-section" id="moods"><div class="section-head"><div><h2>Mood playlists</h2></div><span class="mood-hint">Choose a mood to filter favorites ↘</span></div>
+        <div class="mood-grid"><button class="mood-card mood-dreamy" data-mood="Dreamy"><span class="mood-symbol">☾</span><span class="mood-name">Dreamy</span><span class="mood-description">Soft, hazy songs for drifting away.</span><span class="mood-count">1 SONG <b>↗</b></span></button><button class="mood-card mood-euphoric" data-mood="Euphoric"><span class="mood-symbol">✳</span><span class="mood-name">Euphoric</span><span class="mood-description">Big, bright tracks that lift you up.</span><span class="mood-count">1 SONG <b>↗</b></span></button><button class="mood-card mood-blue" data-mood="Blue hour"><span class="mood-symbol">◇</span><span class="mood-name">Blue hour</span><span class="mood-description">Quiet music for late-night thoughts.</span><span class="mood-count">1 SONG <b>↗</b></span></button><button class="mood-card mood-grounded" data-mood="Grounded"><span class="mood-symbol">⌁</span><span class="mood-name">Grounded</span><span class="mood-description">Steady sounds to settle into the moment.</span><span class="mood-count">0 SONGS <b>↗</b></span></button></div>
+        <div class="mood-results" id="mood-results" hidden></div>
+      </section>
+      <footer><span>MADE FOR THE MUSIC THAT MOVES YOU</span><span>AFTERHOURS <b>✳</b> 2025</span></footer>
+    </main>
+  </div>
+  <dialog id="entry-dialog"><form method="dialog" id="entry-form"><button type="button" class="dialog-close" aria-label="Close">×</button><span class="eyebrow dialog-eyebrow" id="dialog-eyebrow">BUILD YOUR ARCHIVE</span><h2 id="dialog-title">Add a song</h2>
+    <label id="title-field-label">Song title<input name="title" placeholder="e.g. Dreams" required></label><label id="artist-field">Artist<input name="artist" placeholder="e.g. Fleetwood Mac" required></label>
+    <label id="album-field">Album<input name="album" placeholder="e.g. Rumours"></label><div class="form-row" id="track-details"><label id="rating-field">Your rating<select name="rating"><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></label><label id="mood-field">Mood<select name="mood"><option>Dreamy</option><option>Euphoric</option><option>Blue hour</option><option>Grounded</option></select></label></div>
+    <div class="dialog-actions"><button type="button" class="cancel" id="dialog-cancel">Cancel</button><button type="submit" class="submit">Add to archive <span>↗</span></button></div>
+  </form></dialog>
+  <script>
+    const storeKey = 'afterhours-music-tracker-v1';
+    const songList = document.querySelector('#song-list');
+    const albumGrid = document.querySelector('#album-grid');
+    const artistGrid = document.querySelector('#artist-grid');
+    const dialog = document.querySelector('#entry-dialog');
+    const form = document.querySelector('#entry-form');
+    let mode = 'song';
+
+    const musicQuotes = [
+      'Keep the songs that make a moment stay.',
+      'Some nights need a softer soundtrack.',
+      'Music turns a passing feeling into a place.',
+      'Follow the sound back to yourself.',
+      'Every favorite holds a little piece of time.',
+      'Let the song find the words you have not yet.'
+    ];
+    const quoteSlot = document.querySelector('#random-quote');
+    let lastQuote = -1;
+    try { const storedQuote = sessionStorage.getItem('afterhours-last-quote'); if (storedQuote !== null) lastQuote = Number(storedQuote); } catch (error) { /* Storage can be unavailable for local files. */ }
+    let quoteIndex = Math.floor(Math.random() * musicQuotes.length);
+    if (musicQuotes.length > 1 && quoteIndex === lastQuote) quoteIndex = (quoteIndex + 1 + Math.floor(Math.random() * (musicQuotes.length - 1))) % musicQuotes.length;
+    quoteSlot.textContent = `“${musicQuotes[quoteIndex]}”`;
+    try { sessionStorage.setItem('afterhours-last-quote', String(quoteIndex)); } catch (error) { /* The quote still randomizes without storage. */ }
+
+    function saveArchive() {
+      const songs = [...songList.querySelectorAll('.song-row')].map(row => ({title:row.dataset.title,artist:row.dataset.artist,album:row.dataset.album,rating:Number(row.dataset.rating),mood:row.dataset.mood,favorite:row.classList.contains('favorite-off') ? false : true}));
+      const albums = [...albumGrid.querySelectorAll('.album-card')].map(card => ({title:card.dataset.album,artist:card.dataset.artist,rating:Number(card.dataset.rating)}));
+      const artists = [...artistGrid.querySelectorAll('.artist-card')].map(card => ({name:card.dataset.artist}));
+      localStorage.setItem(storeKey, JSON.stringify({songs,albums,artists}));
+      updateCounts();
+    }
+    function updateCounts() {
+      document.querySelector('#favorite-count').textContent = songList.querySelectorAll('.song-row:not(.favorite-off)').length;
+      document.querySelector('#album-count').textContent = albumGrid.children.length;
+      document.querySelector('#artist-count').textContent = artistGrid.children.length;
+      document.querySelector('#songs-empty').hidden = songList.children.length > 0;
+      document.querySelector('#albums-empty').hidden = albumGrid.children.length > 0;
+      document.querySelector('#artists-empty').hidden = artistGrid.children.length > 0;
+      artistGrid.querySelectorAll('.artist-card').forEach(card=>{const artist=card.dataset.artist;const albumCount=[...albumGrid.querySelectorAll('.album-card')].filter(item=>item.dataset.artist===artist).length;const favoriteCount=[...songList.querySelectorAll('.song-row:not(.favorite-off)')].filter(item=>item.dataset.artist===artist).length;card.querySelector('.artist-copy span').textContent=`${albumCount} ${albumCount===1?'album':'albums'} · ${favoriteCount} ${favoriteCount===1?'favorite':'favorites'}`;});
+      document.querySelectorAll('.mood-card').forEach(card=>{const count=[...songList.querySelectorAll('.song-row:not(.favorite-off)')].filter(row=>row.dataset.mood===card.dataset.mood).length;card.querySelector('.mood-count').innerHTML=`${count} ${count===1?'SONG':'SONGS'} <b>↗</b>`;});
+    }
+    function makeMenu(kind) {
+      const details=document.createElement('details'); details.className='item-menu';
+      details.innerHTML=kind==='song'
+        ? '<summary aria-label="Song options">•••</summary><div class="item-menu-pop"><label>Move to<select class="song-move"><option>Dreamy</option><option>Euphoric</option><option>Blue hour</option><option>Grounded</option></select></label><div class="move-order"><button type="button" data-action="up" aria-label="Move song up">↑ Move up</button><button type="button" data-action="down" aria-label="Move song down">↓ Move down</button></div><button type="button" class="remove-item" data-action="remove">Remove song</button></div>'
+        : kind==='album'
+          ? '<summary aria-label="Album options">•••</summary><div class="item-menu-pop"><div class="move-order"><button type="button" data-action="up" aria-label="Move album left">← Move left</button><button type="button" data-action="down" aria-label="Move album right">→ Move right</button></div><button type="button" class="remove-item" data-action="remove">Remove album</button></div>'
+          : '<summary aria-label="Artist options">•••</summary><div class="item-menu-pop"><div class="move-order"><button type="button" data-action="up" aria-label="Move artist left">← Move left</button><button type="button" data-action="down" aria-label="Move artist right">→ Move right</button></div><button type="button" class="remove-item" data-action="remove">Remove artist</button></div>';
+      return details;
+    }
+    function decorateSong(row) {
+      if(row.querySelector('.item-menu'))return;
+      const menu=makeMenu('song'); menu.querySelector('select').value=row.dataset.mood||'Dreamy'; row.append(menu);
+    }
+    function decorateAlbum(card) { if(!card.querySelector('.item-menu'))card.append(makeMenu('album')); }
+    function decorateArtist(card) { if(!card.querySelector('.item-menu'))card.append(makeMenu('artist')); }
+    function ensureArtist(name) { if(!name || [...artistGrid.querySelectorAll('.artist-card')].some(card=>card.dataset.artist.toLowerCase()===name.toLowerCase()))return; addArtist({name}); }
+    function moveItem(item,direction,container){const sibling=direction==='up'?item.previousElementSibling:item.nextElementSibling;if(!sibling)return;if(direction==='up')container.insertBefore(item,sibling);else container.insertBefore(sibling,item);refreshIndexes(container);saveArchive();}
+    function refreshIndexes(container){[...container.children].forEach((item,index)=>{const number=item.querySelector('.song-index');if(number)number.textContent=String(index+1).padStart(2,'0');});}
+    function addSong(song) {
+      const row = document.createElement('article'); row.className='song-row';
+      Object.assign(row.dataset,{title:song.title,artist:song.artist,album:song.album,rating:song.rating,mood:song.mood});
+      const initials=song.artist.split(/\s+/).map(part=>part[0]).join('').slice(0,2).toUpperCase();
+      row.innerHTML=`<span class="song-index">${String(songList.children.length+1).padStart(2,'0')}</span><div class="cover cover-new">${initials}</div><div class="song-copy"><strong></strong><span></span></div><span class="mood-label"></span><span class="rating" aria-label="${song.rating} out of 5"></span><button class="heart is-favorite" aria-label="Toggle favorite">♥</button>`;
+      row.querySelector('.song-copy strong').textContent=song.title; row.querySelector('.song-copy span').textContent=`${song.artist} · ${song.album || 'Single'}`;
+      row.querySelector('.mood-label').textContent=song.mood.toUpperCase(); row.querySelector('.rating').textContent='★'.repeat(song.rating)+'☆'.repeat(5-song.rating);
+      decorateSong(row);
+      songList.append(row);
+    }
+    function addAlbum(album) {
+      const card=document.createElement('article'); card.className='album-card'; Object.assign(card.dataset,{album:album.title,artist:album.artist,rating:album.rating});
+      const initials=album.artist.split(/\s+/).map(part=>part[0]).join('').slice(0,2).toUpperCase();
+      card.innerHTML=`<div class="album-art cover-new"><span>${initials}</span><b class="listened-check">✓</b></div><div class="album-copy"><strong></strong><span></span><div class="album-rating" role="group" aria-label="Rate ${album.title}" data-rating="${album.rating}">${[1,2,3,4,5].map(value=>`<button aria-label="Rate ${value} stars">★</button>`).join('')}</div></div>`;
+      card.querySelector('.album-copy strong').textContent=album.title; card.querySelector('.album-copy span').textContent=album.artist;
+      card.querySelectorAll('.album-rating button').forEach((button,index)=>button.classList.toggle('selected',index<album.rating)); decorateAlbum(card); albumGrid.append(card);
+    }
+    function addArtist(artist) {
+      const card=document.createElement('article'); card.className='artist-card'; card.dataset.artist=artist.name;
+      const initials=artist.name.split(/\s+/).map(part=>part[0]).join('').slice(0,2).toUpperCase();
+      card.innerHTML=`<div class="artist-avatar cover-new"><span>${initials}</span></div><div class="artist-copy"><strong></strong><span></span></div>`;
+      card.querySelector('.artist-copy strong').textContent=artist.name; decorateArtist(card); artistGrid.append(card); updateCounts();
+    }
+    document.querySelector('#add-song').addEventListener('click',()=>openDialog('song'));
+    document.querySelector('#add-album').addEventListener('click',()=>openDialog('album'));
+    document.querySelector('#add-artist').addEventListener('click',()=>openDialog('artist'));
+    function openDialog(nextMode){mode=nextMode;form.reset();const isSong=mode==='song',isAlbum=mode==='album';document.querySelector('#dialog-title').textContent=isSong?'Add a song':isAlbum?'Add an album':'Add an artist';document.querySelector('#dialog-eyebrow').textContent=isSong?'SAVE A FAVORITE':isAlbum?'ADD TO YOUR LISTENED ALBUMS':'GROW YOUR ARTIST ARCHIVE';document.querySelector('#title-field-label').firstChild.textContent=isSong?'Song title':isAlbum?'Album title':'Artist name';form.querySelector('[name="title"]').placeholder=isSong?'e.g. Dreams':isAlbum?'e.g. Rumours':'e.g. Fleetwood Mac';form.querySelector('#artist-field').hidden=!isSong&&!isAlbum;form.querySelector('[name="artist"]').required=isSong||isAlbum;form.querySelector('#album-field').hidden=!isSong;form.querySelector('#track-details').hidden=mode==='artist';form.querySelector('#mood-field').hidden=!isSong;dialog.showModal();}
+    document.querySelector('#dialog-cancel').addEventListener('click',()=>dialog.close()); document.querySelector('.dialog-close').addEventListener('click',()=>dialog.close());
+    form.addEventListener('submit',event=>{event.preventDefault();const data=new FormData(form);const title=String(data.get('title')||'').trim(),artist=String(data.get('artist')||'').trim();if(!title||(mode!=='artist'&&!artist))return;
+      if(mode==='song'){addSong({title,artist,album:String(data.get('album')||'').trim(),rating:Number(data.get('rating')),mood:String(data.get('mood'))});ensureArtist(artist);}
+      else if(mode==='album'){addAlbum({title,artist,rating:Number(data.get('rating'))});ensureArtist(artist);}
+      else addArtist({name:title});saveArchive();dialog.close();});
+    songList.addEventListener('click',event=>{const heart=event.target.closest('.heart');if(!heart)return;const row=heart.closest('.song-row');row.classList.toggle('favorite-off');heart.classList.toggle('is-favorite');heart.setAttribute('aria-label',row.classList.contains('favorite-off')?'Add to favorites':'Remove from favorites');saveArchive();});
+    songList.addEventListener('change',event=>{const select=event.target.closest('.song-move');if(!select)return;const row=select.closest('.song-row');row.dataset.mood=select.value;row.querySelector('.mood-label').textContent=select.value.toUpperCase();saveArchive();});
+    songList.addEventListener('click',event=>{const action=event.target.closest('[data-action]');if(!action)return;const row=action.closest('.song-row');if(action.dataset.action==='remove'){row.remove();refreshIndexes(songList);saveArchive();}else moveItem(row,action.dataset.action,songList);action.closest('.item-menu').open=false;});
+    albumGrid.addEventListener('click',event=>{const action=event.target.closest('[data-action]');if(!action)return;const card=action.closest('.album-card');if(action.dataset.action==='remove')card.remove();else moveItem(card,action.dataset.action,albumGrid);saveArchive();action.closest('.item-menu').open=false;});
+    artistGrid.addEventListener('click',event=>{const action=event.target.closest('[data-action]');if(!action)return;const card=action.closest('.artist-card');if(action.dataset.action==='remove')card.remove();else moveItem(card,action.dataset.action,artistGrid);saveArchive();action.closest('.item-menu').open=false;});
+    albumGrid.addEventListener('click',event=>{const button=event.target.closest('.album-rating button');if(!button)return;const rating=Number(button.getAttribute('aria-label').match(/\d+/)[0]);const card=button.closest('.album-card');card.dataset.rating=rating;const stars=button.parentElement;stars.dataset.rating=rating;stars.querySelectorAll('button').forEach((star,index)=>star.classList.toggle('selected',index<rating));saveArchive();});
+    document.querySelector('.mood-grid').addEventListener('click',event=>{const card=event.target.closest('.mood-card');if(!card)return;document.querySelectorAll('.mood-card').forEach(item=>item.classList.toggle('active',item===card));const mood=card.dataset.mood;const matches=[...songList.querySelectorAll('.song-row:not(.favorite-off)')].filter(row=>row.dataset.mood===mood);const results=document.querySelector('#mood-results');results.hidden=false;results.innerHTML='';const title=document.createElement('strong');title.textContent=`${mood} playlist`;results.append(title);if(!matches.length){const empty=document.createElement('p');empty.textContent='No favorites in this mood yet. Add a song and choose this mood.';results.append(empty);}else matches.forEach(row=>{const item=document.createElement('p');item.textContent=`${row.dataset.title} — ${row.dataset.artist}`;results.append(item);});});
+    function restoreArchive(){try{const saved=JSON.parse(localStorage.getItem(storeKey));if(!saved){songList.querySelectorAll('.song-row').forEach(decorateSong);albumGrid.querySelectorAll('.album-card').forEach(decorateAlbum);artistGrid.querySelectorAll('.artist-card').forEach(decorateArtist);return;}songList.innerHTML='';albumGrid.innerHTML='';artistGrid.innerHTML='';const savedArtists=saved.artists?.length?saved.artists:[...new Set([...(saved.albums||[]).map(album=>album.artist),...(saved.songs||[]).map(song=>song.artist)])].map(name=>({name}));savedArtists.forEach(addArtist);(saved.songs||[]).forEach(addSong);(saved.albums||[]).forEach(addAlbum);(saved.songs||[]).forEach((song,index)=>{if(song.favorite===false){songList.children[index].classList.add('favorite-off');songList.children[index].querySelector('.heart').classList.remove('is-favorite');}});updateCounts();}catch(error){console.warn('Could not restore music archive',error);songList.querySelectorAll('.song-row').forEach(decorateSong);albumGrid.querySelectorAll('.album-card').forEach(decorateAlbum);artistGrid.querySelectorAll('.artist-card').forEach(decorateArtist);}}
+    document.querySelectorAll('.album-rating').forEach(group=>group.querySelectorAll('button').forEach((star,index)=>star.classList.toggle('selected',index<Number(group.dataset.rating))));
+    restoreArchive();updateCounts();
+  </script>
+</body>
+</html>
